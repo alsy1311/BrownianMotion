@@ -42,14 +42,29 @@ bool isInside(Particle p, float xPos, float yPos, float step) {
 class Visualizer
 {
 public:
-	Visualizer(int count): m_count(count)
+	Visualizer(int count, float width, float height): m_count(count), m_width(width), m_height(height)
 	{
 	}
+	void paintSquare(float step, float width, float height, sf::RenderWindow& window, std::vector < Particle > particles) {
+		for (auto i = step; i <= width; i += step) {
+			for (auto j = step; j <= height; j += step) {
+				float counter = 0;
+				for (auto p : particles) {
+					if (isInside(p, i, j, step)) {
+						++counter;
+					}
+				}
+				sf::RectangleShape rectangle;
+				rectangle.setPosition(sf::Vector2f(i - step, j - step));
+				rectangle.setSize(sf::Vector2f(step, step));
+				rectangle.setFillColor(sf::Color(0, static_cast<int>(255 * counter / m_count * 3), 0));
+				window.draw(rectangle);
+			}
+		}
+	}
 	int run() {
-		const auto width = 600.f;
-		const auto height = 600.f;
-		const auto step = width / 20.0f;
-		sf::RenderWindow window{ sf::VideoMode(static_cast<const unsigned int>(width),static_cast<const unsigned int> (height)), "PHYSICS" };
+		const auto step = m_width / 20.0f;
+		sf::RenderWindow window{ sf::VideoMode(static_cast<const unsigned int>(m_width),static_cast<const unsigned int> (m_height)), "PHYSICS" };
 		window.setFramerateLimit(40);
 		std::vector < Particle > particles;
 		std::random_device rd;
@@ -72,22 +87,8 @@ public:
 				}
 			}
 			window.clear();
-			for (auto i = step; i <= width; i += step) {
-				for (auto j = step; j <= height; j += step) {
-					float counter = 0;
-					for (auto p : particles) {
-						if (isInside(p, i, j, step)) {
-							++counter;
-						}
-					}
-					sf::RectangleShape rectangle;
-					rectangle.setPosition(sf::Vector2f(i - step, j - step));
-					rectangle.setSize(sf::Vector2f(step, step));
-					rectangle.setFillColor(sf::Color(0, 255 * counter / m_count * 3.5f, 0));
-					window.draw(rectangle);
-				}
-			}
-			for (auto i = 0U; i < m_count; ++i) {
+			paintSquare(step, m_width, m_height, window, particles);
+			for (auto i = 0U; i < static_cast<unsigned int>(m_count); ++i) {
 				std::random_device rd;
 				std::mt19937 genm(rd());
 				particles[i].move(600U, 600U, genm);
@@ -99,9 +100,11 @@ public:
 	}
 private:
 	int m_count;
+	const float m_width ;
+	const float m_height ;
 };
 int main() {
-	Visualizer myV(20);
+	Visualizer myV(20, 600.f, 600.f);
 	myV.run();
 }
 
