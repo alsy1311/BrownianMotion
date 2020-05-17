@@ -36,14 +36,15 @@ private:
 	sf::Vector2f m_speed;
 
 };
-bool isInside(Particle p, float xPos, float yPos, float step) {
-	return ((p.getPosition().x < xPos) && (p.getPosition().x > (xPos - step)) && (p.getPosition().y < yPos) && (p.getPosition().y > (yPos - step)));
-}
+
 class Visualizer
 {
 public:
 	Visualizer(int count, float width, float height): m_count(count), m_width(width), m_height(height)
 	{
+	}
+	bool isInside(Particle p, float xPos, float yPos, float step) {
+		return ((p.getPosition().x < xPos) && (p.getPosition().x > (xPos - step)) && (p.getPosition().y < yPos) && (p.getPosition().y > (yPos - step)));
 	}
 	void paintSquare(float step, float width, float height, sf::RenderWindow& window, std::vector < Particle > particles) {
 		for (auto i = step; i <= width; i += step) {
