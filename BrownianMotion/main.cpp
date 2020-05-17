@@ -2,53 +2,59 @@
 #include <random>
 #include <chrono>
 #include <thread>
-const auto width = 600U;
-const auto height = 600U;
-auto step = width / 10.0f;
-float generator(float a , float b) {
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<float> dis(a, b);
-	return dis(gen);
-}
+#include<vector>
 class Particle
 {
 public:
-	sf::Vector2f m_position;
-	float m_radius;
-	sf::Vector2f m_speed;
-	Particle() noexcept = default;
-	explicit Particle(const sf::Vector2f position, const float radius, const sf::Vector2f speed) noexcept :
+	Particle(const sf::Vector2f position, const float radius, const sf::Vector2f speed) :
 		m_position(position), m_radius(radius), m_speed(speed)
 	{}
-	~Particle() noexcept = default;
 public:
-	void draw(sf::RenderWindow* m_window) {
+	void draw(sf::RenderWindow &m_window) {
 		sf::CircleShape circle(2.0f * m_radius);
 		circle.setPosition(m_position);
 		circle.setFillColor(sf::Color::Red);
-		m_window->draw(circle);
+		m_window.draw(circle);
 	}
-	void move(const unsigned int W, const unsigned int H) {
-		m_position.x += generator(- m_speed.x, m_speed.x);
-		m_position.y += generator(- m_speed.y, m_speed.y);
+	void move(const unsigned int W, const unsigned int H, std::mt19937 gen) {
+		std::uniform_real_distribution<float> disx(- m_speed.x, m_speed.x);
+		std::uniform_real_distribution<float> disy(- m_speed.y, m_speed.y);
+		m_position.x += disx(gen);
+		m_position.y += disy(gen);
 		if (m_position.x > W) m_position.x = 0.f; if (m_position.x < 0) m_position.x = static_cast<float>(W);
 		if (m_position.y > H) m_position.y = 0.f; if (m_position.y < 0) m_position.y = static_cast<float>(H);
 	}
+	sf::Vector2f getPosition() {
+		return m_position;
+	}
+	sf::Vector2f getSpeed() {
+		return m_speed;
+	}
+private: 
+	sf::Vector2f m_position;
+	float m_radius;
+	sf::Vector2f m_speed;
+
 };
-bool isInside(Particle* p, const unsigned int xPos, const unsigned int yPos) {
-	return ((p -> m_position.x < xPos) && (p -> m_position.x > (xPos - step)) && (p ->m_position.y < yPos) && (p -> m_position.y > (yPos - step)));
+bool isInside(Particle p, float xPos, float yPos, float step) {
+	return ((p.getPosition().x < xPos) && (p.getPosition().x > (xPos - step)) && (p.getPosition().y < yPos) && (p.getPosition().y > (yPos - step)));
 }
 int main() {
-	sf::RenderWindow window{ sf::VideoMode(600U, 600U), "PHYSICS" };
+	const auto width = 600.f;
+	const auto height = 600.f;
+	const auto step = width / 20.0f;
+	sf::RenderWindow window{sf::VideoMode(static_cast<const unsigned int>(width),static_cast<const unsigned int> (height)), "PHYSICS"};
 	window.setFramerateLimit(40);
-	std::vector < Particle* > particles;
+	std::vector < Particle > particles;
 	int count = 20;
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dis(0, 600);
+	sf::Vector2f speed(10.f, 10.f);
 	for (int i = 0; i < count; i++)
 	{
-		sf::Vector2f position(generator(0, 600), generator(0, 600));
-		sf::Vector2f speed(0.02f, 0.02f);
-		particles.push_back(new Particle(position, 5.0, speed));
+		sf::Vector2f position( dis(gen), dis(gen));
+		particles.push_back(Particle(position, 5.0, speed));
 	}
 	while (window.isOpen())
 	{
@@ -63,9 +69,9 @@ int main() {
 		window.clear();
 		for (auto i = step; i <= width; i += step) {
 			for (auto j = step; j <= height; j += step) {
-				double counter = 0;
+				float counter = 0;
 				for (auto p : particles) {
-					if (isInside(p, i, j)) {
+					if (isInside(p, i, j, step)) {
 						++counter;
 					}
 				}
@@ -77,10 +83,10 @@ int main() {
 			}
 		}
 		for (auto i = 0U; i < count; ++i) {
-			particles[i]->move(600U, 600U);
-			particles[i]->draw(&window);
-			//window.display();
-			//window.clear();
+			std::random_device rd;
+			std::mt19937 genm(rd());
+			particles[i].move(600U, 600U, genm);
+			particles[i].draw(window);
 		}
 		window.display();
 	}
