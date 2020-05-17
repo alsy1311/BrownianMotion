@@ -39,58 +39,70 @@ private:
 bool isInside(Particle p, float xPos, float yPos, float step) {
 	return ((p.getPosition().x < xPos) && (p.getPosition().x > (xPos - step)) && (p.getPosition().y < yPos) && (p.getPosition().y > (yPos - step)));
 }
-int main() {
-	const auto width = 600.f;
-	const auto height = 600.f;
-	const auto step = width / 20.0f;
-	sf::RenderWindow window{sf::VideoMode(static_cast<const unsigned int>(width),static_cast<const unsigned int> (height)), "PHYSICS"};
-	window.setFramerateLimit(40);
-	std::vector < Particle > particles;
-	int count = 20;
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<float> dis(0, 600);
-	sf::Vector2f speed(10.f, 10.f);
-	for (int i = 0; i < count; i++)
+class Visualizer
+{
+public:
+	Visualizer(int count): m_count(count)
 	{
-		sf::Vector2f position( dis(gen), dis(gen));
-		particles.push_back(Particle(position, 5.0, speed));
 	}
-	while (window.isOpen())
-	{
-		sf::Event event;
-		while (window.pollEvent(event))
+	int run() {
+		const auto width = 600.f;
+		const auto height = 600.f;
+		const auto step = width / 20.0f;
+		sf::RenderWindow window{ sf::VideoMode(static_cast<const unsigned int>(width),static_cast<const unsigned int> (height)), "PHYSICS" };
+		window.setFramerateLimit(40);
+		std::vector < Particle > particles;
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<float> dis(0, 600);
+		sf::Vector2f speed(10.f, 10.f);
+		for (int i = 0; i < m_count; i++)
 		{
-			if (event.type == sf::Event::Closed)
+			sf::Vector2f position(dis(gen), dis(gen));
+			particles.push_back(Particle(position, 5.0, speed));
+		}
+		while (window.isOpen())
+		{
+			sf::Event event;
+			while (window.pollEvent(event))
 			{
-				window.close();
-			}
-		}
-		window.clear();
-		for (auto i = step; i <= width; i += step) {
-			for (auto j = step; j <= height; j += step) {
-				float counter = 0;
-				for (auto p : particles) {
-					if (isInside(p, i, j, step)) {
-						++counter;
-					}
+				if (event.type == sf::Event::Closed)
+				{
+					window.close();
 				}
-				sf::RectangleShape rectangle;
-				rectangle.setPosition(sf::Vector2f(i - step, j - step));
-				rectangle.setSize(sf::Vector2f(step, step));
-				rectangle.setFillColor(sf::Color(0, 255 * counter / count * 3.5f, 0));
-				window.draw(rectangle);
 			}
+			window.clear();
+			for (auto i = step; i <= width; i += step) {
+				for (auto j = step; j <= height; j += step) {
+					float counter = 0;
+					for (auto p : particles) {
+						if (isInside(p, i, j, step)) {
+							++counter;
+						}
+					}
+					sf::RectangleShape rectangle;
+					rectangle.setPosition(sf::Vector2f(i - step, j - step));
+					rectangle.setSize(sf::Vector2f(step, step));
+					rectangle.setFillColor(sf::Color(0, 255 * counter / m_count * 3.5f, 0));
+					window.draw(rectangle);
+				}
+			}
+			for (auto i = 0U; i < m_count; ++i) {
+				std::random_device rd;
+				std::mt19937 genm(rd());
+				particles[i].move(600U, 600U, genm);
+				particles[i].draw(window);
+			}
+			window.display();
 		}
-		for (auto i = 0U; i < count; ++i) {
-			std::random_device rd;
-			std::mt19937 genm(rd());
-			particles[i].move(600U, 600U, genm);
-			particles[i].draw(window);
-		}
-		window.display();
+		return EXIT_SUCCESS;
 	}
-	return EXIT_SUCCESS;
+private:
+	int m_count;
+};
+int main() {
+	Visualizer myV(20);
+	myV.run();
 }
 
 
